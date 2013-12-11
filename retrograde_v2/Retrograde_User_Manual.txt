@@ -1,0 +1,4 @@
+
+rt								- Reste Temperature
+
+t [<year yy> <month mm> <date dd> <day: Sun=1> <hour hh> <minute mm> <second ss>] - read or set RTC [time]

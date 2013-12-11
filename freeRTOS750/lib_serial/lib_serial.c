@@ -122,6 +122,52 @@
 
 #endif
 
+#if  defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+#define vInterrupt2_On()									\
+{															\
+	uint8_t ucByte;								    		\
+															\
+	ucByte  = UCSR2B;										\
+	ucByte |= _BV(UDRIE2);									\
+	UCSR2B  = ucByte;										\
+}
+
+#define vInterrupt2_Off()									\
+{															\
+	uint8_t ucByte;								   			\
+															\
+	ucByte  = UCSR2B;										\
+	ucByte &= ~_BV(UDRIE2);									\
+	UCSR2B  = ucByte;										\
+}
+
+#define vInterrupt3_On()									\
+{															\
+	uint8_t ucByte;								    		\
+															\
+	ucByte  = UCSR3B;										\
+	ucByte |= _BV(UDRIE3);									\
+	UCSR3B  = ucByte;										\
+}
+
+#define vInterrupt3_Off()									\
+{															\
+	uint8_t ucByte;								   			\
+															\
+	ucByte  = UCSR3B;										\
+	ucByte &= ~_BV(UDRIE3);									\
+	UCSR3B  = ucByte;										\
+}
+
+#else
+
+#define vInterrupt2_On()
+#define vInterrupt2_Off()
+#define vInterrupt3_On()
+#define vInterrupt3_Off()
+
+#endif
+
 /*-----------------------------------------------------------*/
 
 /* Create a handle for the serial port, USART0. */
@@ -135,7 +181,12 @@ xComPortHandle xSerialPort;
 xComPortHandle xSerial1Port;
 
 #endif
-
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+/* Create a handle for the other serial ports, USART2,3. */
+/* This variable is special, as it is used in the interrupt */
+xComPortHandle xSerial2Port;
+xComPortHandle xSerial3Port;
+#endif
 /*-----------------------------------------------------------------*/
 
 // xSerialPrintf_P(PSTR("\r\nMessage %u %u %u"), var1, var2, var2);
@@ -198,7 +249,7 @@ void xSerialPrint_P(PGM_P str)
 /*-----------------------------------------------------------*/
 
 
-// These can be set to use any USART (but only two implemented for now).
+// These can be set to use any USART
 
 void xSerialxPrintf( xComPortHandlePtr pxPort, const char * format, ...)
 {
@@ -278,7 +329,18 @@ inline void xSerialFlush( xComPortHandlePtr pxPort )
 #endif
 
 	case USART2:
+#if  defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+		while ( UCSR2A & (1<<RXC2) )
+			byte = UDR2;
+		break;
+#endif
+
 	case USART3:
+#if  defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+		while ( UCSR3A & (1<<RXC3) )
+			byte = UDR3;
+		break;
+#endif
 	default:
 		break;
 	}
@@ -339,7 +401,13 @@ inline portBASE_TYPE xSerialPutChar( xComPortHandlePtr pxPort, unsigned const po
 		break;
 
 	case USART2:
+		vInterrupt2_On();
+		break;
+
 	case USART3:
+		vInterrupt3_On();
+		break;
+
 	default:
 		break;
 	}
@@ -401,6 +469,7 @@ xComPortHandle xSerialPortInitMinimal( eCOMPort ePort, uint32_t ulWantedBaud, ui
 
 	case USART1:
 #if defined(__AVR_ATmega324P__)  || defined(__AVR_ATmega644P__)|| defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega324PA__) || defined(__AVR_ATmega644PA__) ||defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+		PRR1 &= ~ _BV(PRUSART1);
 		UBRR1 = (uint16_t)((configCPU_CLOCK_HZ + ulWantedBaud * 4UL) / (ulWantedBaud * 8UL) - 1);
 		UCSR1A = _BV(U2X1);
 		UCSR1B = ( _BV(RXCIE1) | _BV(RXEN1) | _BV(TXEN1));
@@ -410,7 +479,25 @@ xComPortHandle xSerialPortInitMinimal( eCOMPort ePort, uint32_t ulWantedBaud, ui
 #endif
 
 	case USART2:
+#if  defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+		PRR1 &= ~ _BV(PRUSART2);
+		UBRR2 = (uint16_t)((configCPU_CLOCK_HZ + ulWantedBaud * 4UL) / (ulWantedBaud * 8UL) - 1);
+		UCSR2A = _BV(U2X2);
+		UCSR2B = ( _BV(RXCIE2) | _BV(RXEN2) | _BV(TXEN2));
+		UCSR2C = ( _BV(UCSZ21) | _BV(UCSZ20) );
+
+		break;
+#endif
 	case USART3:
+#if  defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+		PRR1 &= ~ _BV(PRUSART3);
+		UBRR3 = (uint16_t)((configCPU_CLOCK_HZ + ulWantedBaud * 4UL) / (ulWantedBaud * 8UL) - 1);
+		UCSR3A = _BV(U2X3);
+		UCSR3B = ( _BV(RXCIE3) | _BV(RXEN3) | _BV(TXEN3));
+		UCSR3C = ( _BV(UCSZ31) | _BV(UCSZ30) );
+
+		break;
+#endif
 	default:
 		break;
 	}
@@ -448,11 +535,28 @@ void vSerialClose( xComPortHandlePtr oldComPortPtr )
 			ucByte = UCSR1B;
 			ucByte &= ~(_BV(RXCIE1));
 			UCSR1B = ucByte;
+			PRR1 |= _BV(PRUSART1);
 			break;
 #endif
 
 		case USART2:
+#if  defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			vInterrupt2_Off();
+			ucByte = UCSR2B;
+			ucByte &= ~(_BV(RXCIE2));
+			UCSR2B = ucByte;
+			PRR1 |= _BV(PRUSART2);
+			break;
+#endif
 		case USART3:
+#if  defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			vInterrupt3_Off();
+			ucByte = UCSR3B;
+			ucByte &= ~(_BV(RXCIE3));
+			UCSR3B = ucByte;
+			PRR1 |= _BV(PRUSART3);
+			break;
+#endif
 		default:
 			break;
 		}
@@ -557,7 +661,7 @@ inline int8_t avrSerialCheckTxReady(void)
 
 // Polling read and write routines, for use before freeRTOS vTaskStartScheduler (interrupts enabled).
 // Same as above, but doesn't use interrupts.
-// These can be set to use any USART (but only two implemented for now).
+// These can be set to use any USART
 
 void avrSerialxPrintf(xComPortHandlePtr pxPort, const char * format, ...)
 {
@@ -633,7 +737,17 @@ inline void avrSerialxWrite(xComPortHandlePtr pxPort, int8_t DataOut)
 #endif
 
 		case USART2:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			UDR2 = DataOut;
+			break;
+#endif
+
 		case USART3:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			UDR3 = DataOut;
+			break;
+#endif
+
 		default:
 			break;
 	}
@@ -667,7 +781,24 @@ inline int8_t avrSerialxRead(xComPortHandlePtr pxPort)
 #endif
 
 		case USART2:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			/* If error, return 0xFF */
+			if ( UCSR2A & (_BV(FE2)|_BV(DOR2)|_BV(UPE2)) )
+				return 0xFF;
+			else
+				return UDR2;
+			break;
+#endif
+
 		case USART3:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			/* If error, return 0xFF */
+			if ( UCSR3A & (_BV(FE3)|_BV(DOR3)|_BV(UPE3)) )
+				return 0xFF;
+			else
+				return UDR3;
+			break;
+#endif
 		default:
 			break;
 	}
@@ -690,7 +821,15 @@ inline int8_t avrSerialxCheckRxComplete(xComPortHandlePtr pxPort )
 #endif
 
 		case USART2:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			return( UCSR2A & (_BV(RXC2)) );			// nonzero if serial data is available to read.
+			break;
+#endif
 		case USART3:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			return( UCSR3A & (_BV(RXC3)) );			// nonzero if serial data is available to read.
+			break;
+#endif
 		default:
 			break;
 	}
@@ -711,7 +850,16 @@ inline int8_t avrSerialxCheckTxReady(xComPortHandlePtr pxPort )
 			break;
 #endif
 		case USART2:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			return( UCSR2A & (_BV(UDRE2)) );		// nonzero if transmit register is ready to receive new data.
+			break;
+#endif
+
 		case USART3:
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+			return( UCSR3A & (_BV(UDRE3)) );		// nonzero if transmit register is ready to receive new data.
+			break;
+#endif
 		default:
 			break;
 	}
@@ -795,4 +943,73 @@ ISR( USART1_UDRE_vect )
 	}
 }
 /*-----------------------------------------------------------*/
+
 #endif
+
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+ISR( USART2_RX_vect )
+{
+	uint8_t cChar;
+
+	/* Get status and data from buffer */
+
+	/* If error bit set (Frame Error, Data Over Run, Parity), return nothing */
+	if ( ! (UCSR2A & ((1<<FE2)|(1<<DOR2)|(1<<UPE2)) ) )
+	{
+		/* If no error, get the character and post it on the buffer of Rxed characters. */
+		cChar = UDR2;
+
+		if( ! ringBuffer_IsFull( &(xSerial2Port.xRxedChars) ) )
+			ringBuffer_Poke( &(xSerial2Port.xRxedChars), cChar);
+	}
+}
+/*-----------------------------------------------------------*/
+
+ISR( USART2_UDRE_vect )
+{
+	if( ringBuffer_IsEmpty( &(xSerial2Port.xCharsForTx) ) )
+	{
+		// Queue empty, nothing to send.
+		vInterrupt2_Off();
+	}
+	else
+	{
+		UDR2 = ringBuffer_Pop( &(xSerial2Port.xCharsForTx) );
+	}
+}
+/*-----------------------------------------------------------*/
+ISR( USART3_RX_vect )
+{
+	uint8_t cChar;
+
+	/* Get status and data from buffer */
+
+	/* If error bit set (Frame Error, Data Over Run, Parity), return nothing */
+	if ( ! (UCSR3A & ((1<<FE3)|(1<<DOR3)|(1<<UPE3)) ) )
+	{
+		/* If no error, get the character and post it on the buffer of Rxed characters. */
+		cChar = UDR3;
+
+		if( ! ringBuffer_IsFull( &(xSerial3Port.xRxedChars) ) )
+			ringBuffer_Poke( &(xSerial3Port.xRxedChars), cChar);
+	}
+}
+/*-----------------------------------------------------------*/
+
+ISR( USART3_UDRE_vect )
+{
+	if( ringBuffer_IsEmpty( &(xSerial3Port.xCharsForTx) ) )
+	{
+		// Queue empty, nothing to send.
+		vInterrupt3_Off();
+	}
+	else
+	{
+		UDR3 = ringBuffer_Pop( &(xSerial3Port.xCharsForTx) );
+	}
+}
+/*-----------------------------------------------------------*/
+#endif
+
+
+

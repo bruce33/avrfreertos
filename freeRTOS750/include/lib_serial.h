@@ -100,6 +100,13 @@ extern xComPortHandle xSerialPort;
 /* This variable is special, as it is used in the interrupt */
 extern xComPortHandle xSerial1Port;
 
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+/* Create a handle for the other serial ports, USART2,3. */
+/* This variable is special, as it is used in the interrupt */
+extern xComPortHandle xSerial2Port;
+extern xComPortHandle xSerial3Port;
+#endif
+
 #endif
 
 /*----------------------------------------------------------*/

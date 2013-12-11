@@ -40,7 +40,7 @@ extern "C" {
 	#define configCPU_CLOCK_HZ		( ( uint32_t ) F_CPU)			// This F_CPU variable set by Eclipse environment
 
 //	XRAM device options. Different methods of enabling and driving.    MegaRAM only implemented for two banks of 56kByte currently.
-	#define portMEGA_RAM											// Use the Rugged Circuits External (128kByte) MegaRAM device. - OR -
+//	#define portMEGA_RAM											// Use the Rugged Circuits External (128kByte) MegaRAM device. - OR -
 //	#define portQUAD_RAM											// Use the Rugged Circuits External (512kByte) QuadRAM device.
 
 //	portQUAD_RAM device Options. NOT valid for use with portMEGA_RAM.  XRAM Memory is available as 8 banks of 56kByte, for heap. - OR -
@@ -62,14 +62,14 @@ extern "C" {
 																	// Used for heap_1.c, heap2.c, and heap4.c only, and maximum Array size possible for Heap is 32767.
 #endif
 
-	#define portW5200						// or we assume W5100 Ethernet
+//	#define portW5200						// or we assume W5100 Ethernet
 
 //	#define portHD44780_LCD					// define the use of the Freetronics HD44780 LCD (or other). Check include for (flexible) pin assignments.
-	#define portSD_CARD						// define the use of the SD Card for Arduino Mega2560 and Freetronics EtherMega
+//	#define portSD_CARD						// define the use of the SD Card for Arduino Mega2560 and Freetronics EtherMega
 //	#define portRTC_DEFINED					// RTC DS1307 implemented, therefore define.
 
 	#define	portSERIAL_BUFFER_RX	64		// Define the size of the serial receive buffer.
-	#define	portSERIAL_BUFFER_TX	255		// Define the size of the serial transmit buffer, only as long as the longest line of text.
+	#define	portSERIAL_BUFFER_TX	127		// Define the size of the serial transmit buffer, only as long as the longest line of text.
 	#define portSERIAL_BUFFER		portSERIAL_BUFFER_TX
 
     #define portUSE_TIMER1_PWM				// Define which Timer to use as the PWM Timer (not the tick timer).

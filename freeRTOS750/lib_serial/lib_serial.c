@@ -888,6 +888,9 @@ ISR( USART_RX_vect )
 		if( ! ringBuffer_IsFull( &(xSerialPort.xRxedChars) ) )
 			ringBuffer_Poke( &(xSerialPort.xRxedChars), cChar);
 	}
+	else {
+		uint8_t dummy = UDR0;
+	}
 }
 /*-----------------------------------------------------------*/
 
@@ -927,6 +930,9 @@ ISR( USART1_RX_vect )
 		if( ! ringBuffer_IsFull( &(xSerial1Port.xRxedChars) ) )
 			ringBuffer_Poke( &(xSerial1Port.xRxedChars), cChar);
 	}
+	else {
+		uint8_t dummy = UDR1;
+	}
 }
 /*-----------------------------------------------------------*/
 
@@ -962,6 +968,10 @@ ISR( USART2_RX_vect )
 		if( ! ringBuffer_IsFull( &(xSerial2Port.xRxedChars) ) )
 			ringBuffer_Poke( &(xSerial2Port.xRxedChars), cChar);
 	}
+	else {
+		uint8_t dummy = UDR2;
+	}
+
 }
 /*-----------------------------------------------------------*/
 
@@ -993,6 +1003,10 @@ ISR( USART3_RX_vect )
 		if( ! ringBuffer_IsFull( &(xSerial3Port.xRxedChars) ) )
 			ringBuffer_Poke( &(xSerial3Port.xRxedChars), cChar);
 	}
+	else {
+		uint8_t dummy = UDR3;
+	}
+
 }
 /*-----------------------------------------------------------*/
 

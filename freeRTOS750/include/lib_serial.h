@@ -59,6 +59,7 @@ extern "C" {
 #endif
 
 #include <avr/pgmspace.h>
+#include <stdbool.h>
 
 #include "queue.h"
 #include "portable.h"
@@ -87,6 +88,7 @@ typedef struct
 	uint8_t *serialWorkBuffer; // create a working buffer pointer, to later be malloc() on the heap.
 	uint16_t serialWorkBufferSize; // size of working buffer as created on the heap.
 	binary	serialWorkBufferInUse;	// flag to prevent overwriting by multiple tasks using the same USART.
+	bool transmitting;
 } xComPortHandle, * xComPortHandlePtr;
 
 
@@ -162,6 +164,9 @@ void xSerialxPrint_P(xComPortHandlePtr pxPort, PGM_P str);
  * Interrupt driven routines to interface to ISR serial port IO.
  */
 void xSerialFlush( xComPortHandlePtr pxPort );
+/** Flush a particular serial port waiting until all bytes have been sent on the wire */
+void xSerialFlushTX(xComPortHandlePtr xSerialPort);
+
 uint16_t xSerialAvailableChar( xComPortHandlePtr pxPort );
 
 portBASE_TYPE xSerialGetChar( xComPortHandlePtr pxPort, unsigned portBASE_TYPE *pcRxedChar );

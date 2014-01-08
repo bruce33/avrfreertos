@@ -373,39 +373,41 @@ inline portBASE_TYPE xSerialGetChar( xComPortHandlePtr pxPort, unsigned portBASE
 inline portBASE_TYPE xSerialPutChar( xComPortHandlePtr pxPort, unsigned const portBASE_TYPE cOutChar )
 {
 	/* Return false if there remains no room on the Tx ring buffer */
-
 	if( ! ringBuffer_IsFull( &(pxPort->xCharsForTx) ) )
 		ringBuffer_Poke( &(pxPort->xCharsForTx), cOutChar ); // poke in a fast byte
 	else
 	{
 		 // go slower, per character rate for 115200 is 86us
-		_delay_us(25); // delay for about one character (maximum _delay_loop_1() delay is 32 us at 22MHz)
-		_delay_us(25);
-		_delay_us(25);
-		_delay_us(25);
+		_delay_us(100); // delay for about one character (maximum _delay_loop_1() delay is 32 us at 22MHz)
+		_delay_us(100);
 
 		if( ! ringBuffer_IsFull( &(pxPort->xCharsForTx) ) )
 			ringBuffer_Poke( &(pxPort->xCharsForTx), cOutChar ); // poke in a byte slowly
 		else
 			return pdFAIL; // if the Tx ring buffer remains full
 	}
+	pxPort->transmitting = true;
 
 	switch (pxPort->usart)
 	{
 	case USART0:
 		vInterrupt0_On();
+		UCSR0A |= _BV(TXC0);
 		break;
 
 	case USART1:
 		vInterrupt1_On();
+		UCSR1A |= _BV(TXC1);
 		break;
 
 	case USART2:
 		vInterrupt2_On();
+		UCSR2A |= _BV(TXC2);
 		break;
 
 	case USART3:
 		vInterrupt3_On();
+		UCSR3A |= _BV(TXC3);
 		break;
 
 	default:
@@ -437,9 +439,9 @@ xComPortHandle xSerialPortInitMinimal( eCOMPort ePort, uint32_t ulWantedBaud, ui
 	newComPort.usart = ePort; // containing eCOMPort
 	newComPort.serialWorkBufferSize = uxTxQueueLength; // size of the working buffer for vsnprintf
 	newComPort.serialWorkBufferInUse = VACANT;  // clear the occupation flag.
+	newComPort.transmitting = false;
 
 	portENTER_CRITICAL();
-
 	switch (newComPort.usart)
 	{
 	case USART0:
@@ -506,6 +508,27 @@ xComPortHandle xSerialPortInitMinimal( eCOMPort ePort, uint32_t ulWantedBaud, ui
 
 	return newComPort;
 }
+
+
+void xSerialFlushTX(xComPortHandlePtr xSerialPort) {
+	switch(xSerialPort->usart) {
+	case USART0:
+		while (xSerialPort->transmitting && !(UCSR0A & _BV(TXC0)));
+		break;
+	case USART1:
+		while (xSerialPort->transmitting && !(UCSR1A & _BV(TXC1)));
+		break;
+	case USART2:
+		while (xSerialPort->transmitting && !(UCSR2A & _BV(TXC2)));
+		break;
+	case USART3:
+		while (xSerialPort->transmitting && !(UCSR3A & _BV(TXC3)));
+		break;
+	}
+	xSerialPort->transmitting = false;
+
+}
+
 
 void vSerialClose( xComPortHandlePtr oldComPortPtr )
 {
